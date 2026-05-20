@@ -1,0 +1,4 @@
+[core]
+    remote = origin
+['remote "origin"']
+    url = https://dagshub.com/Sandaru757/Task-3-Automated-retraining-and-monitoring-pipeline.-CL04-G05.dvc
