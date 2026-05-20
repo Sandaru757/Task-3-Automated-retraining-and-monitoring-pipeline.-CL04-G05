@@ -1,0 +1,5 @@
+outs:
+- md5: 03d1833b9c7b4fb5f218a67bcb5ed299
+  size: 4222390
+  hash: md5
+  path: power_consumption.csv

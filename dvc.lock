@@ -1,0 +1,110 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/preprocess_new_data.py
+    deps:
+    - path: data/power_consumption.csv
+      hash: md5
+      md5: 03d1833b9c7b4fb5f218a67bcb5ed299
+      size: 4222390
+    - path: src/preprocess_new_data.py
+      hash: md5
+      md5: 25f940684849bf38f9fc9e00a99251bb
+      size: 1755
+    outs:
+    - path: artifacts/data/X_test.npy
+      hash: md5
+      md5: 2a5ac861ca88f98308c2ec0b27657e65
+      size: 587232
+    - path: artifacts/data/X_train.npy
+      hash: md5
+      md5: 3d9552dc82a15b154a6e1fbe1f8e9b57
+      size: 2348320
+    - path: artifacts/data/y_test.npy
+      hash: md5
+      md5: 4318d57f644c48cce4b2a3a0b100dc2d
+      size: 84000
+    - path: artifacts/data/y_train.npy
+      hash: md5
+      md5: 10579fb335a46f9cfceb92d67d3c3f4d
+      size: 335584
+    - path: artifacts/preprocessing/feature_columns.json
+      hash: md5
+      md5: 2a13b13fd653fa5605b2531baeae52a8
+      size: 165
+    - path: artifacts/preprocessing/scaler.pkl
+      hash: md5
+      md5: 167bb61234bf6f608b420e6e1e2d50f0
+      size: 735
+  train:
+    cmd: python src/model.py
+    deps:
+    - path: artifacts/data/X_train.npy
+      hash: md5
+      md5: 3d9552dc82a15b154a6e1fbe1f8e9b57
+      size: 2348320
+    - path: artifacts/data/y_train.npy
+      hash: md5
+      md5: 10579fb335a46f9cfceb92d67d3c3f4d
+      size: 335584
+    - path: src/model.py
+      hash: md5
+      md5: 1cbb508a3ae6b0020123d9610c56cae0
+      size: 1583
+    outs:
+    - path: artifacts/metrics/training_history.json
+      hash: md5
+      md5: b0fe53c215fa75365eaabb0070f8ddf9
+      size: 110
+    - path: artifacts/models/model.pkl
+      hash: md5
+      md5: 712534f65042b07393eb4ae1ac5d8c9d
+      size: 6511873
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: artifacts/data/X_test.npy
+      hash: md5
+      md5: 2a5ac861ca88f98308c2ec0b27657e65
+      size: 587232
+    - path: artifacts/data/y_test.npy
+      hash: md5
+      md5: 4318d57f644c48cce4b2a3a0b100dc2d
+      size: 84000
+    - path: artifacts/models/model.pkl
+      hash: md5
+      md5: 712534f65042b07393eb4ae1ac5d8c9d
+      size: 6511873
+    - path: src/evaluate.py
+      hash: md5
+      md5: b2cc6dee98995862313d2e5ad049215d
+      size: 1003
+    outs:
+    - path: artifacts/metrics/evaluation_metrics.json
+      hash: md5
+      md5: da747bcc9ec931990d38c62f1c04830c
+      size: 118
+  monitor:
+    cmd: python src/monitor.py
+    deps:
+    - path: artifacts/data/X_test.npy
+      hash: md5
+      md5: 2a5ac861ca88f98308c2ec0b27657e65
+      size: 587232
+    - path: artifacts/models/model.pkl
+      hash: md5
+      md5: 712534f65042b07393eb4ae1ac5d8c9d
+      size: 6511873
+    - path: src/monitor.py
+      hash: md5
+      md5: eda6389b3ae67f0b94779d6b5989ad6b
+      size: 1976
+    outs:
+    - path: artifacts/metrics/monitoring_metrics.json
+      hash: md5
+      md5: 77c2f47590f57616333e78bb789cda9e
+      size: 131
+    - path: reports/drift_report.json
+      hash: md5
+      md5: 9f6cca5c62e51bff20206a01228c74f0
+      size: 1247
