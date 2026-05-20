@@ -1,0 +1,6 @@
+{
+  "train_mae": 896.4478898902544,
+  "n_estimators": 50,
+  "max_depth": 10,
+  "n_train_samples": 41932
+}
