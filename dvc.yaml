@@ -1,0 +1,46 @@
+stages:
+  preprocess:
+    cmd: python src/preprocess_new_data.py
+    deps:
+      - src/preprocess_new_data.py
+      - data/power_consumption.csv
+    outs:
+      - artifacts/data/X_train.npy
+      - artifacts/data/y_train.npy
+      - artifacts/data/X_test.npy
+      - artifacts/data/y_test.npy
+      - artifacts/preprocessing/scaler.pkl
+      - artifacts/preprocessing/feature_columns.json
+
+  train:
+    cmd: python src/model.py
+    deps:
+      - src/model.py
+      - artifacts/data/X_train.npy
+      - artifacts/data/y_train.npy
+    outs:
+      - artifacts/models/model.pkl
+    metrics:
+      - artifacts/metrics/training_history.json:
+          cache: false
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - artifacts/models/model.pkl
+      - artifacts/data/X_test.npy
+      - artifacts/data/y_test.npy
+    metrics:
+      - artifacts/metrics/evaluation_metrics.json:
+          cache: false
+
+  monitor:
+    cmd: python src/monitor.py
+    deps:
+      - src/monitor.py
+      - artifacts/models/model.pkl
+      - artifacts/data/X_test.npy
+    outs:
+      - reports/drift_report.json
+      - artifacts/metrics/monitoring_metrics.json
