@@ -1,37 +1,73 @@
-"""
-Evaluation script - placeholder for Member 2.
-Computes MAE, RMSE, R-squared on the test set.
-"""
-import json
 import os
-import numpy as np
+import json
 import joblib
+import numpy as np
+
+from datetime import datetime
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-ARTIFACTS_DATA = "artifacts/data"
-ARTIFACTS_MODELS = "artifacts/models"
-ARTIFACTS_METRICS = "artifacts/metrics"
 
-os.makedirs(ARTIFACTS_METRICS, exist_ok=True)
+# -----------------------------
+# Paths
+# -----------------------------
+X_TEST_PATH = "artifacts/data/X_test.npy"
+Y_TEST_PATH = "artifacts/data/y_test.npy"
 
-model = joblib.load(f"{ARTIFACTS_MODELS}/model.pkl")
-X_test = np.load(f"{ARTIFACTS_DATA}/X_test.npy")
-y_test = np.load(f"{ARTIFACTS_DATA}/y_test.npy")
+MODEL_PATH = "artifacts/models/model.pkl"
 
-y_pred = model.predict(X_test)
+METRICS_DIR = "artifacts/metrics"
+EVALUATION_METRICS_PATH = os.path.join(METRICS_DIR, "evaluation_metrics.json")
 
-mae = float(mean_absolute_error(y_test, y_pred))
-rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
-r2 = float(r2_score(y_test, y_pred))
 
-metrics = {
-    "MAE": mae,
-    "RMSE": rmse,
-    "R2": r2,
-    "n_test_samples": int(len(y_test))
-}
+def create_folders():
+    os.makedirs(METRICS_DIR, exist_ok=True)
 
-with open(f"{ARTIFACTS_METRICS}/evaluation_metrics.json", "w") as f:
-    json.dump(metrics, f, indent=2)
 
-print(f"Evaluation - MAE: {mae:.2f}, RMSE: {rmse:.2f}, R2: {r2:.4f}")
+def main():
+    print("Starting model evaluation...")
+
+    create_folders()
+
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Missing model file: {MODEL_PATH}")
+
+    if not os.path.exists(X_TEST_PATH):
+        raise FileNotFoundError(f"Missing file: {X_TEST_PATH}")
+
+    if not os.path.exists(Y_TEST_PATH):
+        raise FileNotFoundError(f"Missing file: {Y_TEST_PATH}")
+
+    model = joblib.load(MODEL_PATH)
+    X_test = np.load(X_TEST_PATH)
+    y_test = np.load(Y_TEST_PATH)
+
+    predictions = model.predict(X_test)
+
+    mae = mean_absolute_error(y_test, predictions)
+    mse = mean_squared_error(y_test, predictions)
+    rmse = mse ** 0.5
+    r2 = r2_score(y_test, predictions)
+
+    evaluation_metrics = {
+        "evaluation_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "test_samples": int(X_test.shape[0]),
+        "number_of_features": int(X_test.shape[1]),
+        "metrics": {
+            "mae": float(mae),
+            "rmse": float(rmse),
+            "r2_score": float(r2)
+        }
+    }
+
+    with open(EVALUATION_METRICS_PATH, "w") as f:
+        json.dump(evaluation_metrics, f, indent=4)
+
+    print("Model evaluation completed successfully.")
+    print(f"Evaluation metrics saved to: {EVALUATION_METRICS_PATH}")
+    print(f"Test MAE: {mae:.4f}")
+    print(f"Test RMSE: {rmse:.4f}")
+    print(f"Test R2 Score: {r2:.4f}")
+
+
+if __name__ == "__main__":
+    main()

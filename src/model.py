@@ -1,49 +1,93 @@
-"""
-Training script - placeholder for Member 2.
-Trains a simple regression model. Uses sklearn instead of TensorFlow for speed.
-"""
-import json
 import os
-from datetime import datetime
-import numpy as np
+import json
 import joblib
+import numpy as np
+
+from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-ARTIFACTS_DATA = "artifacts/data"
-ARTIFACTS_MODELS = "artifacts/models"
-ARTIFACTS_METRICS = "artifacts/metrics"
-ARTIFACTS_METADATA = "artifacts/metadata"
 
-os.makedirs(ARTIFACTS_MODELS, exist_ok=True)
-os.makedirs(ARTIFACTS_METRICS, exist_ok=True)
-os.makedirs(ARTIFACTS_METADATA, exist_ok=True)
+# -----------------------------
+# Paths
+# -----------------------------
+X_TRAIN_PATH = "artifacts/data/X_train.npy"
+Y_TRAIN_PATH = "artifacts/data/y_train.npy"
 
-X_train = np.load(f"{ARTIFACTS_DATA}/X_train.npy")
-y_train = np.load(f"{ARTIFACTS_DATA}/y_train.npy")
+MODEL_DIR = "artifacts/models"
+METRICS_DIR = "artifacts/metrics"
 
-print(f"Training on {X_train.shape[0]} samples, {X_train.shape[1]} features")
+MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
+TRAINING_HISTORY_PATH = os.path.join(METRICS_DIR, "training_history.json")
 
-model = RandomForestRegressor(n_estimators=50, max_depth=10, random_state=42, n_jobs=-1)
-model.fit(X_train, y_train)
 
-train_pred = model.predict(X_train)
-train_mae = float(mean_absolute_error(y_train, train_pred))
+def create_folders():
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    os.makedirs(METRICS_DIR, exist_ok=True)
 
-joblib.dump(model, f"{ARTIFACTS_MODELS}/model.pkl")
 
-history = {
-    "train_mae": train_mae,
-    "n_estimators": 50,
-    "max_depth": 10,
-    "n_train_samples": int(X_train.shape[0])
-}
-with open(f"{ARTIFACTS_METRICS}/training_history.json", "w") as f:
-    json.dump(history, f, indent=2)
+def main():
+    print("Starting model training...")
 
-with open(f"{ARTIFACTS_METADATA}/model_version.txt", "w") as f:
-    f.write(f"v1.0 - {datetime.now().isoformat()}\n")
-with open(f"{ARTIFACTS_METADATA}/last_retrain.txt", "w") as f:
-    f.write(datetime.now().isoformat() + "\n")
+    create_folders()
 
-print(f"Training complete. Train MAE: {train_mae:.2f}")
+    if not os.path.exists(X_TRAIN_PATH):
+        raise FileNotFoundError(f"Missing file: {X_TRAIN_PATH}")
+
+    if not os.path.exists(Y_TRAIN_PATH):
+        raise FileNotFoundError(f"Missing file: {Y_TRAIN_PATH}")
+
+    X_train = np.load(X_TRAIN_PATH)
+    y_train = np.load(Y_TRAIN_PATH)
+
+    model = RandomForestRegressor(
+        n_estimators=200,
+        max_depth=20,
+        min_samples_split=4,
+        min_samples_leaf=2,
+        random_state=42,
+        n_jobs=-1
+    )
+
+    model.fit(X_train, y_train)
+
+    train_predictions = model.predict(X_train)
+
+    mae = mean_absolute_error(y_train, train_predictions)
+    mse = mean_squared_error(y_train, train_predictions)
+    rmse = mse ** 0.5
+    r2 = r2_score(y_train, train_predictions)
+
+    joblib.dump(model, MODEL_PATH)
+
+    training_history = {
+        "model_type": "RandomForestRegressor",
+        "training_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "training_samples": int(X_train.shape[0]),
+        "number_of_features": int(X_train.shape[1]),
+        "hyperparameters": {
+            "n_estimators": 200,
+            "max_depth": 20,
+            "min_samples_split": 4,
+            "min_samples_leaf": 2,
+            "random_state": 42
+        },
+        "training_metrics": {
+            "mae": float(mae),
+            "rmse": float(rmse),
+            "r2_score": float(r2)
+        }
+    }
+
+    with open(TRAINING_HISTORY_PATH, "w") as f:
+        json.dump(training_history, f, indent=4)
+
+    print("Model training completed successfully.")
+    print(f"Model saved to: {MODEL_PATH}")
+    print(f"Training MAE: {mae:.4f}")
+    print(f"Training RMSE: {rmse:.4f}")
+    print(f"Training R2 Score: {r2:.4f}")
+
+
+if __name__ == "__main__":
+    main()
