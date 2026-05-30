@@ -1,64 +1,174 @@
-"""
-Monitoring script - placeholder for Member 3.
-Drift detection using Kolmogorov-Smirnov test.
-"""
 import json
 import os
-from datetime import datetime
-import numpy as np
-from scipy import stats
 import joblib
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+import numpy as np
 
-ARTIFACTS_DATA = "artifacts/data"
-ARTIFACTS_MODELS = "artifacts/models"
-ARTIFACTS_METRICS = "artifacts/metrics"
-REPORTS = "reports"
+from scipy.stats import ks_2samp
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-os.makedirs(REPORTS, exist_ok=True)
-os.makedirs(ARTIFACTS_METRICS, exist_ok=True)
 
-X_train = np.load(f"{ARTIFACTS_DATA}/X_train.npy")
-X_test = np.load(f"{ARTIFACTS_DATA}/X_test.npy")
-y_test = np.load(f"{ARTIFACTS_DATA}/y_test.npy")
-model = joblib.load(f"{ARTIFACTS_MODELS}/model.pkl")
+# ======================================
+# PATHS
+# ======================================
+MODEL_PATH = "artifacts/models/model.pkl"
 
-drift_results = []
-DRIFT_THRESHOLD = 0.05
+X_TEST_PATH = "artifacts/data/X_test.npy"
+Y_TEST_PATH = "artifacts/data/y_test.npy"
 
-for i in range(X_train.shape[1]):
-    statistic, p_value = stats.ks_2samp(X_train[:, i], X_test[:, i])
-    drift_results.append({
-        "feature_index": i,
-        "ks_statistic": float(statistic),
-        "p_value": float(p_value),
-        "drift_detected": bool(p_value < DRIFT_THRESHOLD)
-    })
+DRIFT_REPORT_PATH = "reports/drift_report.json"
 
-n_drifted = sum(1 for r in drift_results if r["drift_detected"])
+MONITORING_METRICS_PATH = (
+    "artifacts/metrics/monitoring_metrics.json"
+)
 
-drift_report = {
-    "timestamp": datetime.now().isoformat(),
-    "method": "Kolmogorov-Smirnov test",
-    "threshold_p_value": DRIFT_THRESHOLD,
-    "n_features": len(drift_results),
-    "n_drifted_features": n_drifted,
-    "drift_share": n_drifted / len(drift_results),
-    "feature_results": drift_results
-}
 
-with open(f"{REPORTS}/drift_report.json", "w") as f:
-    json.dump(drift_report, f, indent=2)
+# ======================================
+# LOAD MODEL
+# ======================================
+print("[INFO] Loading model...")
+
+model = joblib.load(MODEL_PATH)
+
+
+# ======================================
+# LOAD DATA
+# ======================================
+print("[INFO] Loading test data...")
+
+X_test = np.load(X_TEST_PATH)
+y_test = np.load(Y_TEST_PATH)
+
+
+# ======================================
+# MAKE PREDICTIONS
+# ======================================
+print("[INFO] Running predictions...")
 
 y_pred = model.predict(X_test)
-monitoring_metrics = {
-    "timestamp": datetime.now().isoformat(),
-    "MAE": float(mean_absolute_error(y_test, y_pred)),
-    "RMSE": float(np.sqrt(mean_squared_error(y_test, y_pred))),
-    "drift_share": n_drifted / len(drift_results)
+
+
+# ======================================
+# PERFORMANCE METRICS
+# ======================================
+print("[INFO] Calculating metrics...")
+
+mae = mean_absolute_error(y_test, y_pred)
+
+rmse = np.sqrt(
+    mean_squared_error(y_test, y_pred)
+)
+
+r2 = r2_score(y_test, y_pred)
+
+
+# ======================================
+# DRIFT DETECTION
+# ======================================
+print("[INFO] Detecting feature drift...")
+
+# Split test data into:
+# reference distribution + current distribution
+
+midpoint = len(X_test) // 2
+
+reference_data = X_test[:midpoint]
+current_data = X_test[midpoint:]
+
+
+feature_drift = {}
+
+for i in range(X_test.shape[1]):
+
+    ks_statistic, p_value = ks_2samp(
+        reference_data[:, i],
+        current_data[:, i]
+    )
+
+    drift_detected = p_value < 0.05
+
+    feature_drift[f"feature_{i}"] = {
+        "ks_statistic": float(ks_statistic),
+        "p_value": float(p_value),
+        "drift_detected": bool(drift_detected)
+    }
+
+
+# ======================================
+# OVERALL DRIFT SUMMARY
+# ======================================
+drifted_features = sum(
+    feature["drift_detected"]
+    for feature in feature_drift.values()
+)
+
+total_features = X_test.shape[1]
+
+drift_percentage = (
+    drifted_features / total_features
+)
+
+overall_drift = {
+    "total_features": int(total_features),
+    "drifted_features": int(drifted_features),
+    "drift_percentage": float(drift_percentage)
 }
 
-with open(f"{ARTIFACTS_METRICS}/monitoring_metrics.json", "w") as f:
-    json.dump(monitoring_metrics, f, indent=2)
 
-print(f"Monitoring - {n_drifted}/{len(drift_results)} features drifted")
+# ======================================
+# CREATE OUTPUT DIRECTORIES
+# ======================================
+os.makedirs("reports", exist_ok=True)
+
+os.makedirs(
+    "artifacts/metrics",
+    exist_ok=True
+)
+
+
+# ======================================
+# SAVE DRIFT REPORT
+# ======================================
+print("[INFO] Saving drift report...")
+
+drift_report = {
+    "overall_drift": overall_drift,
+    "feature_drift": feature_drift
+}
+
+with open(DRIFT_REPORT_PATH, "w") as f:
+    json.dump(
+        drift_report,
+        f,
+        indent=4
+    )
+
+
+# ======================================
+# SAVE MONITORING METRICS
+# ======================================
+print("[INFO] Saving monitoring metrics...")
+
+monitoring_metrics = {
+    "MAE": float(mae),
+    "RMSE": float(rmse),
+    "R2": float(r2),
+    "drift_summary": overall_drift
+}
+
+with open(MONITORING_METRICS_PATH, "w") as f:
+    json.dump(
+        monitoring_metrics,
+        f,
+        indent=4
+    )
+
+
+# ======================================
+# FINISHED
+# ======================================
+print("[INFO] Monitoring complete.")
+
+print(json.dumps(
+    monitoring_metrics,
+    indent=4
+))
