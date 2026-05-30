@@ -36,3 +36,12 @@ See CONTRACT.md for full I/O specification and per-person responsibilities.
 
 Dataset and model artifacts are stored on DagsHub:
 https://dagshub.com/Sandaru757/Task-3-Automated-retraining-and-monitoring-pipeline.-CL04-G05
+
+
+## Monitoring Dashboard
+
+A live Streamlit dashboard visualises pipeline status, training and evaluation metrics, drift detection (Kolmogorov-Smirnov test), and predicted-versus-actual performance.
+
+### Run locally
+The dashboard opens automatically at http://localhost:8501
+
