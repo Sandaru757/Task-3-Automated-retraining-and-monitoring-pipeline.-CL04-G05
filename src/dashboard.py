@@ -1,4 +1,4 @@
-﻿"""
+"""
 MLOps Monitoring Dashboard
 Live view of the Tetouan power consumption pipeline.
 CL04 G05 - AI for Engineering
@@ -261,15 +261,15 @@ with col2:
 
 with col3:
     if evaluation_metrics:
-        r2 = evaluation_metrics["metrics"]["r2_score"]
+        r2 = evaluation_metrics.get("metrics", {}).get("r2_score", 0)
         st.metric("Test R-squared", f"{r2:.3f}")
     else:
         st.metric("Test R-squared", "N/A")
 
 with col4:
     if drift_report:
-        drifted = drift_report["n_drifted_features"]
-        total = drift_report["n_features"]
+        drifted = drift_report.get("n_drifted_features", 0)
+        total = drift_report.get("n_features", 0)
         st.metric("Features Drifted", f"{drifted} / {total}")
     else:
         st.metric("Features Drifted", "N/A")
@@ -280,7 +280,7 @@ with col4:
 # -----------------------------
 if drift_report and evaluation_metrics:
     share = drift_report.get("drift_share", 0)
-    r2 = evaluation_metrics["metrics"]["r2_score"]
+    r2 = evaluation_metrics.get("metrics", {}).get("r2_score", 0)
 
     if share > 0.5 or r2 < 0.3:
         st.markdown(
@@ -341,7 +341,7 @@ with left:
 with right:
     st.markdown("### Evaluation Metrics")
     if evaluation_metrics:
-        em = evaluation_metrics["metrics"]
+        em = evaluation_metrics.get("metrics", {})
         sub1, sub2, sub3 = st.columns(3)
         with sub1:
             st.metric("MAE", f"{em.get('mae', 0):.0f}")
@@ -374,7 +374,7 @@ if drift_report:
         st.caption(f"Report time: {drift_report.get('timestamp', 'N/A')[:19]}")
 
     with drift_col2:
-        features = drift_report["feature_results"]
+        features = drift_report.get("feature_results", [])
         fig, ax = plt.subplots(figsize=(10, 4))
         colors = ["#ef4444" if r["drift_detected"] else "#10b981" for r in features]
         ax.bar(range(len(features)),
