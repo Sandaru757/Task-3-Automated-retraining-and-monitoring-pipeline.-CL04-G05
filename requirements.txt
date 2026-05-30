@@ -1,0 +1,9 @@
+dvc
+pandas
+numpy
+scikit-learn
+joblib
+scipy
+streamlit
+matplotlib
+dvc-http
