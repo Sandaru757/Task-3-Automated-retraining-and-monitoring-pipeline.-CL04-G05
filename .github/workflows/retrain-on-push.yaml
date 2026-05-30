@@ -1,0 +1,80 @@
+name: Auto Retrain on New Data
+
+on:
+  push:
+    paths:
+      - 'data/**'
+      - '.github/workflows/retrain-on-push.yml'
+
+  schedule:
+    - cron: '0 0 * * 0'
+
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install dvc pandas numpy scikit-learn scipy joblib tensorflow dvclive matplotlib
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Configure DVC Remote
+      run: |
+        dvc remote modify origin --local auth basic
+        dvc remote modify origin --local user ${{ secrets.DAGSHUB_USERNAME }}
+        dvc remote modify origin --local password ${{ secrets.DAGSHUB_TOKEN }}
+
+    - name: Pull DVC Data
+      run: |
+        dvc pull --allow-missing
+
+    - name: Run Monitoring
+      run: |
+        python src/monitor.py || echo "Monitoring completed"
+
+    - name: Run DVC Pipeline
+      run: |
+        dvc repro
+
+    - name: Push Updated Artifacts
+      run: |
+        dvc push
+
+    - name: Commit Updated Files
+      run: |
+        git add dvc.lock artifacts/ reports/ || true
+
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "feat(ci): automated retraining pipeline"
+          git push
+        fi
+
+    - name: Upload Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: pipeline-reports-${{ github.run_id }}
+        path: |
+          reports/
+          artifacts/metrics/
+        retention-days: 7
