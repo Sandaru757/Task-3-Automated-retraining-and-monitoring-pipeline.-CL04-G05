@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 # -----------------------------
 # Paths
 # -----------------------------
-DATA_PATH = "data/power_consumption.csv.dvc"
+DATA_PATH = "data/power_consumption.csv"
 
 ARTIFACT_DATA_DIR = "artifacts/data"
 ARTIFACT_PREPROCESSING_DIR = "artifacts/preprocessing"
