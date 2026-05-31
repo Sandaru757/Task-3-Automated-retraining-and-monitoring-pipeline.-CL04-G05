@@ -5,12 +5,18 @@ CL04 G05 - AI for Engineering
 """
 import json
 import os
-import joblib
-import numpy as np
-import pandas as pd
+import subprocess
 import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime
+
+# Optional imports - degrade gracefully if not present at runtime
+try:
+    import numpy as np
+    import joblib
+except Exception:
+    np = None
+    joblib = None
 
 # -----------------------------
 # Paths
@@ -35,20 +41,9 @@ st.set_page_config(
 # -----------------------------
 st.markdown("""
 <style>
-    /* Hide default Streamlit toolbar */
-    header[data-testid="stHeader"] {
-        display: none;
-    }
-
-    /* Hide the deploy button and menu */
-    [data-testid="stDecoration"] {
-        display: none;
-    }
-
-    /* Remove extra top padding */
-    .block-container {
-        padding-top: 2rem !important;
-    }
+    header[data-testid="stHeader"] { display: none; }
+    [data-testid="stDecoration"] { display: none; }
+    .block-container { padding-top: 2rem !important; }
 
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -61,69 +56,22 @@ st.markdown("""
         margin-bottom: 2rem;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
-
-    .main-header h1 {
-        color: white;
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-
-    .main-header p {
-        color: rgba(255, 255, 255, 0.85);
-        margin: 0.5rem 0 0 0;
-        font-size: 1.1rem;
-    }
-
-    .metric-card {
-        background: rgba(30, 41, 59, 0.6);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(148, 163, 184, 0.1);
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
+    .main-header h1 { color: white; margin: 0; font-size: 2.5rem; font-weight: 700; }
+    .main-header p  { color: rgba(255,255,255,0.85); margin: 0.5rem 0 0 0; font-size: 1.1rem; }
 
     [data-testid="stMetricValue"] {
         font-size: 2rem !important;
         font-weight: 700;
         color: #f1f5f9;
     }
-
     [data-testid="stMetricLabel"] {
         color: #94a3b8;
         font-size: 0.9rem;
-        font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-
-    h1, h2, h3 {
-        color: #f1f5f9 !important;
-    }
-
-    .stMarkdown, .stCaption, p {
-        color: #cbd5e1;
-    }
-
-    .status-good {
-        color: #10b981;
-        font-weight: 600;
-    }
-
-    .status-warn {
-        color: #f59e0b;
-        font-weight: 600;
-    }
-
-    .status-bad {
-        color: #ef4444;
-        font-weight: 600;
-    }
-
-    .stProgress > div > div {
-        background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
-    }
+    h1, h2, h3 { color: #f1f5f9 !important; }
+    .stMarkdown, .stCaption, p { color: #cbd5e1; }
 
     section[data-testid="stSidebar"] {
         background: rgba(15, 23, 42, 0.95);
@@ -137,11 +85,9 @@ st.markdown("""
         font-size: 0.85rem;
         font-weight: 600;
     }
-
     .badge-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
     .badge-warn    { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
     .badge-danger  { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-    .badge-info    { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
 
     .footer {
         text-align: center;
@@ -161,19 +107,24 @@ st.markdown("""
 def load_json(path):
     if not os.path.exists(path):
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 
 def load_text(path):
     if not os.path.exists(path):
         return "N/A"
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read().strip()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except Exception:
+        return "N/A"
 
 
 def style_chart(ax, fig):
-    """Apply dark theme to matplotlib charts."""
     fig.patch.set_facecolor("#1e293b")
     ax.set_facecolor("#1e293b")
     ax.spines["top"].set_visible(False)
@@ -201,23 +152,19 @@ with st.sidebar:
     st.markdown("**Class:** CL04")
     st.markdown("**Group:** G05")
     st.markdown("**Task:** 3 - Retraining & Monitoring")
-
     st.markdown("---")
     st.markdown("### Team")
     st.markdown("- **Sandaru** - Data Engineer")
     st.markdown("- **Binara** - ML Engineer")
     st.markdown("- **Matthew** - MLOps / DevOps")
     st.markdown("- **Ashen** - Project Manager")
-
     st.markdown("---")
     st.markdown("### Quick Links")
     st.markdown("[GitHub Repo](https://github.com/Sandaru757/Task-3-Automated-retraining-and-monitoring-pipeline.-CL04-G05)")
     st.markdown("[DagsHub Storage](https://dagshub.com/Sandaru757/Task-3-Automated-retraining-and-monitoring-pipeline.-CL04-G05)")
-
     st.markdown("---")
     if st.button("Refresh Dashboard", use_container_width=True):
         st.rerun()
-
     st.caption(f"Last refreshed: {datetime.now().strftime('%H:%M:%S')}")
 
 
@@ -227,6 +174,7 @@ with st.sidebar:
 training_history = load_json(f"{ARTIFACTS_METRICS}/training_history.json")
 evaluation_metrics = load_json(f"{ARTIFACTS_METRICS}/evaluation_metrics.json")
 drift_report = load_json(f"{REPORTS}/drift_report.json")
+monitoring_metrics = load_json(f"{ARTIFACTS_METRICS}/monitoring_metrics.json")
 last_retrain = load_text(f"{ARTIFACTS_METADATA}/last_retrain.txt")
 model_version = load_text(f"{ARTIFACTS_METADATA}/model_version.txt")
 
@@ -246,16 +194,14 @@ st.markdown("""
 # System Status
 # -----------------------------
 st.markdown("### System Status")
-
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Model Version", model_version if model_version else "N/A")
+    st.metric("Model Version", model_version if model_version != "N/A" else "v1.0")
 
 with col2:
     if training_history and "training_timestamp" in training_history:
-        ts = training_history["training_timestamp"]
-        st.metric("Last Trained", ts)
+        st.metric("Last Trained", training_history["training_timestamp"])
     else:
         st.metric("Last Retrain", last_retrain[:19] if last_retrain != "N/A" else "N/A")
 
@@ -268,18 +214,19 @@ with col3:
 
 with col4:
     if drift_report:
-        drifted = drift_report.get("n_drifted_features", 0)
-        total = drift_report.get("n_features", 0)
+        overall = drift_report.get("overall_drift", {})
+        drifted = overall.get("drifted_features", 0)
+        total = overall.get("total_features", 0)
         st.metric("Features Drifted", f"{drifted} / {total}")
     else:
         st.metric("Features Drifted", "N/A")
 
 
 # -----------------------------
-# Pipeline Health Banner
+# Health Banner
 # -----------------------------
 if drift_report and evaluation_metrics:
-    share = drift_report.get("drift_share", 0)
+    share = drift_report.get("overall_drift", {}).get("drift_percentage", 0)
     r2 = evaluation_metrics.get("metrics", {}).get("r2_score", 0)
 
     if share > 0.5 or r2 < 0.3:
@@ -329,14 +276,12 @@ with left:
             st.metric("RMSE", f"{tm.get('rmse', 0):.0f}")
         with sub3:
             st.metric("R-squared", f"{tm.get('r2_score', 0):.3f}")
-
         with st.expander("Hyperparameters"):
             st.json(training_history.get("hyperparameters", {}))
-
         st.caption(f"Trained on {training_history.get('training_samples', 0):,} samples, "
                    f"{training_history.get('number_of_features', 0)} features")
     else:
-        st.warning("No training history found. Run dvc repro first.")
+        st.warning("No training history found.")
 
 with right:
     st.markdown("### Evaluation Metrics")
@@ -349,11 +294,10 @@ with right:
             st.metric("RMSE", f"{em.get('rmse', 0):.0f}")
         with sub3:
             st.metric("R-squared", f"{em.get('r2_score', 0):.3f}")
-
         st.caption(f"Tested on {evaluation_metrics.get('test_samples', 0):,} samples - "
-                   f"data the model never saw during training")
+                   "data the model never saw during training")
     else:
-        st.warning("No evaluation metrics found. Run dvc repro first.")
+        st.warning("No evaluation metrics found.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -364,30 +308,44 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("### Drift Detection")
 
 if drift_report:
+    overall = drift_report.get("overall_drift", {})
+    feature_drift_dict = drift_report.get("feature_drift", {})
+
+    # Sort features by their key order (feature_0, feature_1, ...) numerically
+    def _key_num(k):
+        try:
+            return int(k.split("_")[-1])
+        except Exception:
+            return 0
+
+    feature_keys = sorted(feature_drift_dict.keys(), key=_key_num)
+    feature_list = [feature_drift_dict[k] for k in feature_keys]
+
     drift_col1, drift_col2 = st.columns([1, 2])
 
     with drift_col1:
-        st.metric("Method", drift_report.get("method", "N/A").split(" ")[0])
-        st.metric("p-value Threshold", drift_report.get("threshold_p_value", "N/A"))
-        share = drift_report.get("drift_share", 0)
+        st.metric("Method", "KS Test")
+        st.metric("p-value Threshold", "0.05")
+        share = overall.get("drift_percentage", 0)
         st.metric("Drift Share", f"{share * 100:.1f}%")
-        st.caption(f"Report time: {drift_report.get('timestamp', 'N/A')[:19]}")
+        st.caption(f"{overall.get('drifted_features', 0)} of {overall.get('total_features', 0)} features drifted")
 
     with drift_col2:
-        features = drift_report.get("feature_results", [])
-        fig, ax = plt.subplots(figsize=(10, 4))
-        colors = ["#ef4444" if r["drift_detected"] else "#10b981" for r in features]
-        ax.bar(range(len(features)),
-               [r["ks_statistic"] for r in features],
-               color=colors, edgecolor="none")
-        ax.set_xlabel("Feature Index")
-        ax.set_ylabel("KS Statistic")
-        ax.set_title("Per-Feature Drift (red = drifted, green = stable)")
-        style_chart(ax, fig)
-        st.pyplot(fig, use_container_width=True)
-
+        if feature_list:
+            fig, ax = plt.subplots(figsize=(10, 4))
+            colors = ["#ef4444" if r.get("drift_detected") else "#10b981" for r in feature_list]
+            ax.bar(range(len(feature_list)),
+                   [r.get("ks_statistic", 0) for r in feature_list],
+                   color=colors, edgecolor="none")
+            ax.set_xlabel("Feature Index")
+            ax.set_ylabel("KS Statistic")
+            ax.set_title("Per-Feature Drift (red = drifted, green = stable)")
+            style_chart(ax, fig)
+            st.pyplot(fig, use_container_width=True)
+        else:
+            st.info("No per-feature drift data available.")
 else:
-    st.warning("No drift report found. Run dvc repro first.")
+    st.warning("No drift report found.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -401,7 +359,8 @@ model_path = f"{ARTIFACTS_MODELS}/model.pkl"
 x_test_path = f"{ARTIFACTS_DATA}/X_test.npy"
 y_test_path = f"{ARTIFACTS_DATA}/y_test.npy"
 
-if all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path]):
+if (joblib is not None and np is not None and
+        all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path])):
     model = joblib.load(model_path)
     X_test = np.load(x_test_path)
     y_test = np.load(y_test_path)
@@ -414,10 +373,8 @@ if all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path]):
     )
 
     fig, ax = plt.subplots(figsize=(14, 5))
-    ax.plot(y_test[:n_samples], label="Actual",
-            color="#3b82f6", linewidth=1.8)
-    ax.plot(predictions[:n_samples], label="Predicted",
-            color="#f59e0b", linewidth=1.8, alpha=0.85)
+    ax.plot(y_test[:n_samples], label="Actual", color="#3b82f6", linewidth=1.8)
+    ax.plot(predictions[:n_samples], label="Predicted", color="#f59e0b", linewidth=1.8, alpha=0.85)
     ax.set_xlabel("Time step (10-minute intervals)")
     ax.set_ylabel("Zone 1 Power Consumption")
     ax.set_title(f"Predicted vs Actual - First {n_samples} Test Samples")
@@ -425,8 +382,8 @@ if all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path]):
     style_chart(ax, fig)
     st.pyplot(fig, use_container_width=True)
 
-    pred_mean = predictions.mean()
-    actual_mean = y_test.mean()
+    pred_mean = float(predictions.mean())
+    actual_mean = float(y_test.mean())
     bias = pred_mean - actual_mean
 
     cap_col1, cap_col2, cap_col3 = st.columns(3)
@@ -436,9 +393,8 @@ if all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path]):
         st.metric("Mean Actual", f"{actual_mean:,.0f}")
     with cap_col3:
         st.metric("Bias", f"{bias:+,.0f}")
-
 else:
-    st.warning("Model or test data not found. Run dvc repro first.")
+    st.info("Predicted vs Actual chart requires model artifacts (model.pkl, X_test.npy, y_test.npy). These are tracked by DVC on DagsHub - run the dashboard locally for the full chart.")
 
 
 # -----------------------------
