@@ -359,42 +359,48 @@ model_path = f"{ARTIFACTS_MODELS}/model.pkl"
 x_test_path = f"{ARTIFACTS_DATA}/X_test.npy"
 y_test_path = f"{ARTIFACTS_DATA}/y_test.npy"
 
-if (joblib is not None and np is not None and
-        all(os.path.exists(p) for p in [model_path, x_test_path, y_test_path])):
-    model = joblib.load(model_path)
-    X_test = np.load(x_test_path)
-    y_test = np.load(y_test_path)
-    predictions = model.predict(X_test)
+predictions_data = load_json(f"{ARTIFACTS_METRICS}/predictions_sample.json")
 
-    n_samples = st.slider(
-        "Window size (test samples)",
-        min_value=50, max_value=min(2000, len(y_test)),
-        value=500, step=50
-    )
+if predictions_data:
+    predicted_arr = predictions_data.get("predicted", [])
+    actual_arr = predictions_data.get("actual", [])
+    total_samples = predictions_data.get("total_samples", len(actual_arr))
 
-    fig, ax = plt.subplots(figsize=(14, 5))
-    ax.plot(y_test[:n_samples], label="Actual", color="#3b82f6", linewidth=1.8)
-    ax.plot(predictions[:n_samples], label="Predicted", color="#f59e0b", linewidth=1.8, alpha=0.85)
-    ax.set_xlabel("Time step (10-minute intervals)")
-    ax.set_ylabel("Zone 1 Power Consumption")
-    ax.set_title(f"Predicted vs Actual - First {n_samples} Test Samples")
-    ax.legend(loc="upper right")
-    style_chart(ax, fig)
-    st.pyplot(fig, use_container_width=True)
+    if predicted_arr and actual_arr:
+        max_n = len(actual_arr)
+        n_samples = st.slider(
+            "Window size (test samples)",
+            min_value=50, max_value=max_n,
+            value=min(500, max_n), step=50
+        )
 
-    pred_mean = float(predictions.mean())
-    actual_mean = float(y_test.mean())
-    bias = pred_mean - actual_mean
+        fig, ax = plt.subplots(figsize=(14, 5))
+        ax.plot(actual_arr[:n_samples], label="Actual", color="#3b82f6", linewidth=1.8)
+        ax.plot(predicted_arr[:n_samples], label="Predicted", color="#f59e0b", linewidth=1.8, alpha=0.85)
+        ax.set_xlabel("Time step (10-minute intervals)")
+        ax.set_ylabel("Zone 1 Power Consumption")
+        ax.set_title(f"Predicted vs Actual - First {n_samples} Test Samples")
+        ax.legend(loc="upper right")
+        style_chart(ax, fig)
+        st.pyplot(fig, use_container_width=True)
 
-    cap_col1, cap_col2, cap_col3 = st.columns(3)
-    with cap_col1:
-        st.metric("Mean Predicted", f"{pred_mean:,.0f}")
-    with cap_col2:
-        st.metric("Mean Actual", f"{actual_mean:,.0f}")
-    with cap_col3:
-        st.metric("Bias", f"{bias:+,.0f}")
+        pred_mean = predictions_data.get("mean_predicted_all", 0)
+        actual_mean = predictions_data.get("mean_actual_all", 0)
+        bias = pred_mean - actual_mean
+
+        cap_col1, cap_col2, cap_col3 = st.columns(3)
+        with cap_col1:
+            st.metric("Mean Predicted", f"{pred_mean:,.0f}")
+        with cap_col2:
+            st.metric("Mean Actual", f"{actual_mean:,.0f}")
+        with cap_col3:
+            st.metric("Bias", f"{bias:+,.0f}")
+
+        st.caption(f"Showing first {n_samples} of {total_samples:,} total test samples (pre-computed)")
+    else:
+        st.info("Prediction sample is empty.")
 else:
-    st.info("Predicted vs Actual chart requires model artifacts (model.pkl, X_test.npy, y_test.npy). These are tracked by DVC on DagsHub - run the dashboard locally for the full chart.")
+    st.info("Predicted vs Actual chart requires the predictions sample file. Run the local pipeline first.")
 
 
 # -----------------------------
