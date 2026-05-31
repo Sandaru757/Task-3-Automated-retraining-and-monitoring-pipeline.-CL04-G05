@@ -1,0 +1,64 @@
+{
+    "overall_drift": {
+        "total_features": 11,
+        "drifted_features": 10,
+        "drift_percentage": 0.9090909090909091
+    },
+    "feature_drift": {
+        "feature_0": {
+            "ks_statistic": 0.5068676077832889,
+            "p_value": 0.0,
+            "drift_detected": true
+        },
+        "feature_1": {
+            "ks_statistic": 0.1512781381152232,
+            "p_value": 1.0138754699070468e-52,
+            "drift_detected": true
+        },
+        "feature_2": {
+            "ks_statistic": 0.2676459366653949,
+            "p_value": 1.7036561582004475e-165,
+            "drift_detected": true
+        },
+        "feature_3": {
+            "ks_statistic": 0.07039297977871041,
+            "p_value": 1.0279462171307288e-11,
+            "drift_detected": true
+        },
+        "feature_4": {
+            "ks_statistic": 0.10644792064097673,
+            "p_value": 2.873214140969762e-26,
+            "drift_detected": true
+        },
+        "feature_5": {
+            "ks_statistic": 0.11312476154139642,
+            "p_value": 1.281144878398066e-29,
+            "drift_detected": true
+        },
+        "feature_6": {
+            "ks_statistic": 0.38935520793590234,
+            "p_value": 0.0,
+            "drift_detected": true
+        },
+        "feature_7": {
+            "ks_statistic": 0.0106829454406715,
+            "p_value": 0.9259138670657802,
+            "drift_detected": false
+        },
+        "feature_8": {
+            "ks_statistic": 0.1373521556657764,
+            "p_value": 1.6602330452899571e-43,
+            "drift_detected": true
+        },
+        "feature_9": {
+            "ks_statistic": 0.8241129339946586,
+            "p_value": 0.0,
+            "drift_detected": true
+        },
+        "feature_10": {
+            "ks_statistic": 0.027470431133155285,
+            "p_value": 0.03828404262849278,
+            "drift_detected": true
+        }
+    }
+}
