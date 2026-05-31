@@ -47,8 +47,12 @@ jobs:
 
       - name: Pull latest DVC data
         run: |
-          dvc pull --allow-missing || echo "No existing DVC data found"
-
+           echo "Pulling dataset from DVC remote..."
+           dvc pull data/power_consumption.csv.dvc
+           echo "Checking data folder..."
+           ls -lah data
+           test -f data/power_consumption.csv
+           
       - name: Run monitoring
         run: |
           echo "Running monitoring..."
@@ -56,8 +60,8 @@ jobs:
 
       - name: Run DVC pipeline
         run: |
-          echo "Running DVC pipeline..."
-          dvc repro
+          echo "Running DVC pipeline stages only..."
+          dvc repro preprocess train evaluate monitor
 
       - name: Push updated artifacts to DVC
         run: |
