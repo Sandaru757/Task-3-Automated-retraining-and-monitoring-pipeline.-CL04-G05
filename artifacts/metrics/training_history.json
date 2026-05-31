@@ -1,6 +1,18 @@
 {
-  "train_mae": 896.4478898902544,
-  "n_estimators": 50,
-  "max_depth": 10,
-  "n_train_samples": 41932
+    "model_type": "RandomForestRegressor",
+    "training_timestamp": "2026-05-31 18:35:08",
+    "training_samples": 41932,
+    "number_of_features": 11,
+    "hyperparameters": {
+        "n_estimators": 200,
+        "max_depth": 20,
+        "min_samples_split": 4,
+        "min_samples_leaf": 2,
+        "random_state": 42
+    },
+    "training_metrics": {
+        "mae": 216.9704849448159,
+        "rmse": 352.7084687589963,
+        "r2_score": 0.9975823744962505
+    }
 }
