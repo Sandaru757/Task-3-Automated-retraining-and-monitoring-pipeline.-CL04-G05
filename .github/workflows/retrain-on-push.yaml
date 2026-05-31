@@ -42,12 +42,52 @@ jobs:
       - name: Configure DVC remote
         run: |
           dvc remote modify origin --local auth basic
-          dvc remote modify origin --local user ${{ secrets.DAGSHUB_USERNAME }}
+          dvc remote modify origin --local user ${{ secrets.DAGSHUB_USER }}
           dvc remote modify origin --local password ${{ secrets.DAGSHUB_TOKEN }}
+
+      - name: Debug DVC configuration
+        run: |
+          echo "================================="
+          echo "CURRENT COMMIT"
+          echo "================================="
+          git rev-parse HEAD
+
+          echo ""
+          echo "================================="
+          echo "DVC REMOTE"
+          echo "================================="
+          dvc remote list
+
+          echo ""
+          echo "================================="
+          echo "DATA DIRECTORY"
+          echo "================================="
+          ls -lah data || true
+
+          echo ""
+          echo "================================="
+          echo "DVC FILE CONTENTS"
+          echo "================================="
+          cat data/power_consumption.csv.dvc || true
+
+          echo ""
+          echo "================================="
+          echo "DVC STATUS CLOUD"
+          echo "================================="
+          dvc status -c || true
 
       - name: Pull latest DVC data
         run: |
-          dvc pull --allow-missing || echo "No existing DVC data found"
+          echo "Pulling dataset from DVC remote..."
+          dvc pull -v data/power_consumption.csv.dvc
+
+          echo ""
+          echo "Checking data folder..."
+          ls -lah data
+
+          echo ""
+          echo "Verifying dataset exists..."
+          test -f data/power_consumption.csv
 
       - name: Run monitoring
         run: |
@@ -56,8 +96,8 @@ jobs:
 
       - name: Run DVC pipeline
         run: |
-          echo "Running DVC pipeline..."
-          dvc repro
+          echo "Running DVC pipeline stages only..."
+          dvc repro preprocess train evaluate monitor
 
       - name: Push updated artifacts to DVC
         run: |
