@@ -45,6 +45,17 @@ st.markdown("""
     [data-testid="stDecoration"] { display: none; }
     .block-container { padding-top: 2rem !important; }
 
+    /* Force sidebar always visible */
+    section[data-testid="stSidebar"] {
+        min-width: 280px !important;
+        width: 280px !important;
+        transform: translateX(0) !important;
+    }
+    button[data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+    }
+
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     }
