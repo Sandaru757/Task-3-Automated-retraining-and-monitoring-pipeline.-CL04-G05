@@ -1,10 +1,10 @@
 {
-    "evaluation_timestamp": "2026-06-02 02:20:40",
+    "evaluation_timestamp": "2026-06-02 16:02:40",
     "test_samples": 10484,
     "number_of_features": 11,
     "metrics": {
-        "mae": 4711.657571710962,
-        "rmse": 5186.719516671559,
-        "r2_score": 0.2925031778356
+        "mae": 4708.182355046808,
+        "rmse": 5182.0493122981015,
+        "r2_score": 0.2937766869142526
     }
 }
