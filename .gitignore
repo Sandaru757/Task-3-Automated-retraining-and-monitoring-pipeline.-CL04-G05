@@ -216,8 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# DVC generated outputs
 artifacts/
-artifacts/
-artifacts/
-reports/drift_report.json
-reports/drift_report.json
+reports/*.json
