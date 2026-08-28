@@ -1,6 +1,6 @@
 {
     "model_type": "RandomForestRegressor",
-    "training_timestamp": "2026-08-28 07:59:36",
+    "training_timestamp": "2026-08-28 21:36:51",
     "training_samples": 41932,
     "number_of_features": 11,
     "hyperparameters": {
@@ -12,7 +12,7 @@
     },
     "training_metrics": {
         "mae": 217.06979844082494,
-        "rmse": 352.827263059981,
+        "rmse": 352.8272630599811,
         "r2_score": 0.9975807456808261
     }
 }
