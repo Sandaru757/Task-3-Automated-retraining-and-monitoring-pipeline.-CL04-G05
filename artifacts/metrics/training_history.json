@@ -1,6 +1,6 @@
 {
     "model_type": "RandomForestRegressor",
-    "training_timestamp": "2026-11-14 04:06:00",
+    "training_timestamp": "2026-11-14 17:29:38",
     "training_samples": 41932,
     "number_of_features": 11,
     "hyperparameters": {
