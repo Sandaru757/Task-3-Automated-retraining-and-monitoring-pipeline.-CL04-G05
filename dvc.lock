@@ -54,7 +54,7 @@ stages:
     outs:
     - path: artifacts/metrics/training_history.json
       hash: md5
-      md5: f64860653f87059384112116b25b66d1
+      md5: 574ce97683280dcc6337c55c6cd63729
       size: 472
     - path: artifacts/models/model.pkl
       hash: md5
